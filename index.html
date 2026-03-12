@@ -3,783 +3,99 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>TASKS — 任务清单</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --bg:          #0C0B07;
-      --bg-card:     #131209;
-      --bg-hover:    #1A1914;
-      --gold:        #C49A3C;
-      --gold-soft:   rgba(196, 154, 60, 0.18);
-      --gold-line:   rgba(196, 154, 60, 0.28);
-      --cream:       #EAE0C8;
-      --cream-50:    rgba(234, 224, 200, 0.5);
-      --cream-25:    rgba(234, 224, 200, 0.22);
-      --cream-10:    rgba(234, 224, 200, 0.07);
-      --red:         #B84030;
-      --red-soft:    rgba(184, 64, 48, 0.15);
-      --mono:        'DM Mono', 'Courier New', monospace;
-      --serif:       'Cormorant Garamond', Georgia, serif;
-    }
-
-    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-
-    html { scroll-behavior: smooth; }
-
-    body {
-      min-height: 100vh;
-      background: var(--bg);
-      color: var(--cream);
-      font-family: var(--mono);
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      padding: 64px 20px 100px;
-    }
-
-    /* ── Noise texture overlay ── */
-    body::before {
-      content: '';
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      z-index: 999;
-      opacity: 0.032;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
-      background-size: 300px 300px;
-    }
-
-    /* ── Ambient glow ── */
-    body::after {
-      content: '';
-      position: fixed;
-      top: -15%;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 700px;
-      height: 320px;
-      background: radial-gradient(ellipse at center, rgba(196,154,60,0.055) 0%, transparent 65%);
-      pointer-events: none;
-      z-index: 0;
-    }
-
-    .container {
-      width: 100%;
-      max-width: 600px;
-      position: relative;
-      z-index: 1;
-    }
-
-    /* ══════════════════════════
-       HEADER
-    ══════════════════════════ */
-    .header {
-      text-align: center;
-      margin-bottom: 52px;
-      animation: fadeUp 0.7s ease both;
-    }
-
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(16px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    .header-eyebrow {
-      font-size: 0.58rem;
-      letter-spacing: 0.55em;
-      color: var(--gold);
-      text-transform: uppercase;
-      margin-bottom: 10px;
-      opacity: 0.85;
-    }
-
-    h1 {
-      font-family: var(--serif);
-      font-size: 3.6rem;
-      font-weight: 600;
-      letter-spacing: 0.06em;
-      color: var(--cream);
-      line-height: 1;
-      margin-bottom: 4px;
-    }
-
-    .header-sub {
-      font-size: 0.62rem;
-      letter-spacing: 0.35em;
-      color: var(--cream-25);
-      text-transform: uppercase;
-      margin-bottom: 24px;
-    }
-
-    /* Progress bar */
-    .progress-wrap {
-      position: relative;
-    }
-
-    .progress-track {
-      height: 1px;
-      background: var(--gold-line);
-      position: relative;
-      overflow: visible;
-    }
-
-    .progress-fill {
-      height: 100%;
-      background: linear-gradient(90deg, var(--gold) 0%, #E8C060 100%);
-      transition: width 0.65s cubic-bezier(0.4, 0, 0.2, 1);
-      position: relative;
-    }
-
-    .progress-fill::after {
-      content: '';
-      position: absolute;
-      right: -3px;
-      top: -3.5px;
-      width: 8px;
-      height: 8px;
-      background: var(--gold);
-      border-radius: 50%;
-      box-shadow: 0 0 10px rgba(196,154,60,0.7);
-      transition: opacity 0.3s;
-    }
-
-    .progress-fill[style*="width: 0%"]::after,
-    .progress-fill[style*="width:0%"]::after {
-      opacity: 0;
-    }
-
-    .progress-meta {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 9px;
-      font-size: 0.6rem;
-      letter-spacing: 0.22em;
-      color: var(--cream-25);
-      text-transform: uppercase;
-    }
-
-    #progress-pct { color: var(--gold); opacity: 0.9; }
-
-    /* ══════════════════════════
-       DATE TICKER
-    ══════════════════════════ */
-    .date-ticker {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 20px;
-      margin-bottom: 40px;
-      padding: 10px 0;
-      border-top: 1px solid var(--cream-10);
-      border-bottom: 1px solid var(--cream-10);
-      font-size: 0.58rem;
-      letter-spacing: 0.3em;
-      color: var(--cream-25);
-      text-transform: uppercase;
-      animation: fadeUp 0.7s 0.1s ease both;
-    }
-
-    .date-ticker span { color: var(--cream-50); }
-
-    /* ══════════════════════════
-       INPUT
-    ══════════════════════════ */
-    .input-section {
-      margin-bottom: 32px;
-      animation: fadeUp 0.7s 0.15s ease both;
-    }
-
-    .input-shell {
-      display: flex;
-      border: 1px solid var(--gold-line);
-      background: var(--bg-card);
-      transition: border-color 0.25s;
-    }
-
-    .input-shell:focus-within {
-      border-color: var(--gold);
-    }
-
-    .input-tag {
-      padding: 0 16px;
-      display: flex;
-      align-items: center;
-      font-size: 0.6rem;
-      letter-spacing: 0.3em;
-      color: var(--gold);
-      text-transform: uppercase;
-      border-right: 1px solid var(--gold-line);
-      flex-shrink: 0;
-      opacity: 0.8;
-    }
-
-    .input-shell input {
-      flex: 1;
-      background: transparent;
-      border: none;
-      outline: none;
-      padding: 17px 18px;
-      color: var(--cream);
-      font-family: var(--mono);
-      font-size: 0.875rem;
-      letter-spacing: 0.04em;
-    }
-
-    .input-shell input::placeholder {
-      color: var(--cream-25);
-      font-style: italic;
-    }
-
-    .add-btn {
-      background: none;
-      border: none;
-      border-left: 1px solid var(--gold-line);
-      padding: 0 22px;
-      color: var(--gold);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: background 0.2s;
-    }
-
-    .add-btn:hover { background: var(--gold-soft); }
-
-    /* ══════════════════════════
-       FILTER TABS
-    ══════════════════════════ */
-    .filter-strip {
-      display: flex;
-      border-bottom: 1px solid var(--gold-line);
-      margin-bottom: 8px;
-      animation: fadeUp 0.7s 0.2s ease both;
-    }
-
-    .filter-btn {
-      background: none;
-      border: none;
-      border-bottom: 1.5px solid transparent;
-      margin-bottom: -1px;
-      padding: 10px 22px;
-      font-family: var(--mono);
-      font-size: 0.62rem;
-      letter-spacing: 0.3em;
-      text-transform: uppercase;
-      color: var(--cream-25);
-      cursor: pointer;
-      transition: color 0.2s, border-color 0.2s;
-    }
-
-    .filter-btn.active,
-    .filter-btn:hover {
-      color: var(--gold);
-      border-bottom-color: var(--gold);
-    }
-
-    .filter-count {
-      font-size: 0.52rem;
-      margin-left: 5px;
-      opacity: 0.6;
-    }
-
-    /* ══════════════════════════
-       TODO LIST
-    ══════════════════════════ */
-    .todo-list { list-style: none; }
-
-    .todo-item {
-      display: flex;
-      align-items: flex-start;
-      padding: 16px 0;
-      gap: 14px;
-      border-bottom: 1px solid var(--cream-10);
-      position: relative;
-      animation: slideIn 0.28s ease both;
-      transition: background 0.15s;
-    }
-
-    @keyframes slideIn {
-      from { opacity: 0; transform: translateX(-14px); }
-      to   { opacity: 1; transform: translateX(0); }
-    }
-
-    .todo-item.removing {
-      animation: slideOut 0.22s ease forwards !important;
-    }
-
-    @keyframes slideOut {
-      to {
-        opacity: 0;
-        transform: translateX(22px);
-        padding-top: 0;
-        padding-bottom: 0;
-        max-height: 0;
-        overflow: hidden;
-      }
-    }
-
-    /* Item index */
-    .item-num {
-      font-size: 0.55rem;
-      letter-spacing: 0.08em;
-      color: var(--cream-25);
-      padding-top: 4px;
-      min-width: 26px;
-      text-align: right;
-      flex-shrink: 0;
-    }
-
-    /* Custom checkbox */
-    .chk-wrap {
-      position: relative;
-      width: 18px;
-      height: 18px;
-      flex-shrink: 0;
-      margin-top: 3px;
-      cursor: pointer;
-    }
-
-    .chk-wrap input[type="checkbox"] {
-      position: absolute;
-      inset: 0;
-      opacity: 0;
-      cursor: pointer;
-      margin: 0;
-      z-index: 2;
-    }
-
-    .chk-face {
-      position: absolute;
-      inset: 0;
-      border: 1px solid var(--gold-line);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: background 0.2s, border-color 0.2s;
-    }
-
-    .chk-wrap input:checked ~ .chk-face {
-      background: var(--gold);
-      border-color: var(--gold);
-    }
-
-    .chk-face svg {
-      width: 9px;
-      height: 7px;
-      opacity: 0;
-      transform: scale(0.4);
-      transition: opacity 0.18s, transform 0.18s;
-    }
-
-    .chk-wrap input:checked ~ .chk-face svg {
-      opacity: 1;
-      transform: scale(1);
-    }
-
-    /* Task text */
-    .todo-text {
-      flex: 1;
-      font-family: var(--mono);
-      font-size: 0.875rem;
-      color: var(--cream);
-      letter-spacing: 0.04em;
-      line-height: 1.55;
-      word-break: break-word;
-      padding-top: 2px;
-      transition: color 0.25s, opacity 0.25s;
-    }
-
-    .todo-text.done {
-      color: var(--cream-25);
-      text-decoration: line-through;
-      text-decoration-color: var(--gold);
-      text-decoration-thickness: 1px;
-    }
-
-    .edit-field {
-      flex: 1;
-      background: transparent;
-      border: none;
-      border-bottom: 1px solid var(--gold);
-      outline: none;
-      color: var(--cream);
-      font-family: var(--mono);
-      font-size: 0.875rem;
-      letter-spacing: 0.04em;
-      padding: 2px 0;
-      caret-color: var(--gold);
-    }
-
-    /* Action buttons */
-    .item-actions {
-      display: flex;
-      gap: 2px;
-      opacity: 0;
-      transition: opacity 0.15s;
-      flex-shrink: 0;
-    }
-
-    .todo-item:hover .item-actions { opacity: 1; }
-
-    .act {
-      background: none;
-      border: 1px solid transparent;
-      padding: 3px 9px;
-      font-family: var(--mono);
-      font-size: 0.58rem;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      color: var(--cream-25);
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-
-    .act:hover {
-      border-color: var(--gold-line);
-      color: var(--gold);
-      background: var(--gold-soft);
-    }
-
-    .act.del:hover {
-      border-color: rgba(184, 64, 48, 0.35);
-      color: var(--red);
-      background: var(--red-soft);
-    }
-
-    /* ══════════════════════════
-       EMPTY STATE
-    ══════════════════════════ */
-    .empty-state {
-      text-align: center;
-      padding: 64px 0;
-    }
-
-    .empty-glyph {
-      font-family: var(--serif);
-      font-size: 3rem;
-      color: var(--cream-25);
-      margin-bottom: 16px;
-      display: block;
-      font-style: italic;
-    }
-
-    .empty-label {
-      font-size: 0.62rem;
-      letter-spacing: 0.4em;
-      color: var(--cream-25);
-      text-transform: uppercase;
-    }
-
-    /* ══════════════════════════
-       LIST FOOTER
-    ══════════════════════════ */
-    .list-footer {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-top: 20px;
-      padding-top: 18px;
-      border-top: 1px solid var(--cream-10);
-    }
-
-    .footer-stat {
-      font-size: 0.62rem;
-      letter-spacing: 0.25em;
-      color: var(--cream-25);
-      text-transform: uppercase;
-    }
-
-    .footer-stat b {
-      color: var(--gold);
-      font-weight: 400;
-    }
-
-    .clear-btn {
-      background: none;
-      border: 1px solid transparent;
-      padding: 6px 14px;
-      font-family: var(--mono);
-      font-size: 0.58rem;
-      letter-spacing: 0.22em;
-      text-transform: uppercase;
-      color: var(--cream-25);
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-
-    .clear-btn:hover {
-      border-color: var(--gold-line);
-      color: var(--gold);
-      background: var(--gold-soft);
-    }
-
-    /* ══════════════════════════
-       SCROLLBAR
-    ══════════════════════════ */
-    ::-webkit-scrollbar { width: 3px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: var(--gold-line); }
-
-    /* ══════════════════════════
-       SELECTION
-    ══════════════════════════ */
-    ::selection { background: rgba(196,154,60,0.25); }
-  </style>
+  <title>TASK_SYS // 任务系统</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+
+  <!-- Scan-line overlay -->
+  <div class="scanlines"></div>
+
   <div class="container">
 
-    <!-- Header -->
+    <!-- ── Header ── -->
     <header class="header">
-      <p class="header-eyebrow">Personal Dashboard</p>
-      <h1>任务清单</h1>
-      <p class="header-sub">Task Management</p>
-      <div class="progress-wrap">
-        <div class="progress-track">
-          <div class="progress-fill" id="progress-fill" style="width:0%"></div>
-        </div>
-        <div class="progress-meta">
-          <span id="progress-text">0 / 0 完成</span>
-          <span id="progress-pct">—</span>
-        </div>
+      <div class="header-badge">TASK MANAGEMENT SYSTEM</div>
+      <h1>任务系统</h1>
+      <p class="header-sub">// PERSONAL MISSION CONTROL //</p>
+      <div class="progress-track">
+        <div class="progress-fill" id="progress-fill" style="width:0%" data-empty="true"></div>
+      </div>
+      <div class="progress-meta">
+        <span id="progress-text">0 / 0 COMPLETED</span>
+        <span id="progress-pct">—</span>
       </div>
     </header>
 
-    <!-- Date ticker -->
-    <div class="date-ticker" id="date-ticker">
-      <span id="date-display">—</span>
-      &nbsp;·&nbsp;
-      <span id="time-display">—</span>
+    <!-- ── Clock Bar ── -->
+    <div class="clock-bar">
+      <div class="clock-segment">
+        <div class="label">DATE</div>
+        <div class="val" id="date-val">—</div>
+      </div>
+      <div class="clock-segment">
+        <div class="label">TIME</div>
+        <div class="val" id="time-val">—</div>
+      </div>
+      <div class="clock-segment">
+        <div class="label">DAY</div>
+        <div class="val" id="day-val">—</div>
+      </div>
     </div>
 
-    <!-- Input -->
+    <!-- ── Input ── -->
     <div class="input-section">
       <div class="input-shell">
-        <span class="input-tag">+ New</span>
-        <input id="new-todo" type="text" placeholder="新建任务，按 Enter 确认…" maxlength="200" autocomplete="off" spellcheck="false" />
+        <span class="input-tag">+ NEW</span>
+        <input
+          id="new-todo"
+          type="text"
+          placeholder="输入新任务，按 Enter 确认…"
+          maxlength="200"
+          autocomplete="off"
+          spellcheck="false"
+        />
         <button class="add-btn" id="add-btn" title="添加任务">
-          <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
-            <line x1="6.5" y1="0.5" x2="6.5" y2="12.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
-            <line x1="0.5" y1="6.5" x2="12.5" y2="6.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <line x1="8" y1="1" x2="8" y2="15" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+            <line x1="1" y1="8" x2="15" y2="8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
           </svg>
         </button>
       </div>
     </div>
 
-    <!-- Filters -->
+    <!-- ── Filter Tabs ── -->
     <div class="filter-strip">
-      <button class="filter-btn active" data-filter="all">全部<span class="filter-count" id="cnt-all"></span></button>
-      <button class="filter-btn" data-filter="active">待完成<span class="filter-count" id="cnt-active"></span></button>
-      <button class="filter-btn" data-filter="done">已完成<span class="filter-count" id="cnt-done"></span></button>
+      <button class="filter-btn active" data-filter="all">
+        全部<span class="filter-count" id="cnt-all"></span>
+      </button>
+      <button class="filter-btn" data-filter="active">
+        待完成<span class="filter-count" id="cnt-active"></span>
+      </button>
+      <button class="filter-btn" data-filter="done">
+        已完成<span class="filter-count" id="cnt-done"></span>
+      </button>
     </div>
 
-    <!-- List -->
+    <!-- ── Task List ── -->
     <ul class="todo-list" id="todo-list"></ul>
 
-    <!-- Empty -->
+    <!-- ── Empty State ── -->
     <div class="empty-state" id="empty-state" style="display:none">
-      <span class="empty-glyph">∅</span>
-      <p class="empty-label">暂无任务 · Add one above</p>
+      <span class="empty-glyph">NULL</span>
+      <p class="empty-label">// NO TASKS LOADED · ADD ONE ABOVE //</p>
     </div>
 
-    <!-- Footer -->
+    <!-- ── Footer ── -->
     <div class="list-footer" id="list-footer" style="display:none">
-      <p class="footer-stat"><b id="remain-count">0</b> 项待完成</p>
-      <button class="clear-btn" id="clear-done">清除已完成 ×</button>
+      <p class="footer-stat">
+        <b id="remain-count">0</b>&nbsp;TASKS PENDING
+      </p>
+      <button class="clear-btn" id="clear-done">PURGE COMPLETED ×</button>
     </div>
 
   </div>
 
-  <script>
-    const STORAGE_KEY = 'jrun-todos-v3';
-    let todos  = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-    let filter = 'all';
-    let editingId = null;
-
-    const listEl    = document.getElementById('todo-list');
-    const emptyEl   = document.getElementById('empty-state');
-    const footerEl  = document.getElementById('list-footer');
-    const inputEl   = document.getElementById('new-todo');
-    const remainEl  = document.getElementById('remain-count');
-    const clearBtn  = document.getElementById('clear-done');
-    const addBtn    = document.getElementById('add-btn');
-    const fillEl    = document.getElementById('progress-fill');
-    const ptextEl   = document.getElementById('progress-text');
-    const pPctEl    = document.getElementById('progress-pct');
-    const cntAll    = document.getElementById('cnt-all');
-    const cntActive = document.getElementById('cnt-active');
-    const cntDone   = document.getElementById('cnt-done');
-
-    // ── Clock ──
-    function tickClock() {
-      const now  = new Date();
-      const date = now.toLocaleDateString('zh-CN', { year:'numeric', month:'2-digit', day:'2-digit' }).replace(/\//g, ' · ');
-      const time = now.toLocaleTimeString('zh-CN', { hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false });
-      document.getElementById('date-display').textContent = date;
-      document.getElementById('time-display').textContent = time;
-    }
-    tickClock();
-    setInterval(tickClock, 1000);
-
-    // ── Utils ──
-    function save()  { localStorage.setItem(STORAGE_KEY, JSON.stringify(todos)); }
-    function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
-
-    function filtered() {
-      if (filter === 'active') return todos.filter(t => !t.done);
-      if (filter === 'done')   return todos.filter(t =>  t.done);
-      return todos;
-    }
-
-    function updateProgress() {
-      const total = todos.length;
-      const done  = todos.filter(t => t.done).length;
-      const pct   = total > 0 ? Math.round((done / total) * 100) : 0;
-      fillEl.style.width   = pct + '%';
-      ptextEl.textContent  = `${done} / ${total} 完成`;
-      pPctEl.textContent   = total > 0 ? pct + '%' : '—';
-      cntAll.textContent   = todos.length    ? ` (${todos.length})`   : '';
-      cntActive.textContent= todos.filter(t=>!t.done).length ? ` (${todos.filter(t=>!t.done).length})` : '';
-      cntDone.textContent  = done ? ` (${done})` : '';
-    }
-
-    // ── Render ──
-    function render() {
-      const list = filtered();
-      listEl.innerHTML = '';
-
-      list.forEach((todo, idx) => {
-        const li = document.createElement('li');
-        li.className = 'todo-item';
-        li.dataset.id = todo.id;
-        li.style.animationDelay = Math.min(idx * 0.035, 0.3) + 's';
-
-        // Index
-        const numEl = document.createElement('span');
-        numEl.className = 'item-num';
-        numEl.textContent = String(idx + 1).padStart(2, '0');
-
-        // Checkbox
-        const chkWrap = document.createElement('label');
-        chkWrap.className = 'chk-wrap';
-        const cb = document.createElement('input');
-        cb.type = 'checkbox';
-        cb.checked = todo.done;
-        cb.addEventListener('change', () => toggle(todo.id));
-        const face = document.createElement('span');
-        face.className = 'chk-face';
-        face.innerHTML = `<svg viewBox="0 0 9 7" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M1 3.5L3.5 6L8 1" stroke="#0C0B07" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>`;
-        chkWrap.append(cb, face);
-
-        // Text
-        const textEl = document.createElement('span');
-        textEl.className = 'todo-text' + (todo.done ? ' done' : '');
-        textEl.textContent = todo.text;
-
-        // Actions
-        const actions = document.createElement('div');
-        actions.className = 'item-actions';
-
-        const editBtn = document.createElement('button');
-        editBtn.className = 'act';
-        editBtn.textContent = 'Edit';
-        editBtn.addEventListener('click', () => startEdit(todo.id, textEl));
-
-        const delBtn = document.createElement('button');
-        delBtn.className = 'act del';
-        delBtn.textContent = 'Del';
-        delBtn.addEventListener('click', () => removeTodo(todo.id, li));
-
-        actions.append(editBtn, delBtn);
-        li.append(numEl, chkWrap, textEl, actions);
-        listEl.appendChild(li);
-      });
-
-      const activeCount = todos.filter(t => !t.done).length;
-      const hasAny = todos.length > 0;
-
-      emptyEl.style.display  = list.length === 0 ? 'block' : 'none';
-      footerEl.style.display = hasAny ? 'flex' : 'none';
-      remainEl.textContent   = activeCount;
-      updateProgress();
-    }
-
-    // ── Actions ──
-    function addTodo(text) {
-      text = text.trim();
-      if (!text) return;
-      todos.unshift({ id: genId(), text, done: false });
-      save();
-      render();
-    }
-
-    function toggle(id) {
-      const t = todos.find(t => t.id === id);
-      if (t) { t.done = !t.done; save(); render(); }
-    }
-
-    function removeTodo(id, li) {
-      li.classList.add('removing');
-      li.addEventListener('animationend', () => {
-        todos = todos.filter(t => t.id !== id);
-        save();
-        render();
-      }, { once: true });
-    }
-
-    function startEdit(id, spanEl) {
-      if (editingId) return;
-      editingId = id;
-      const todo = todos.find(t => t.id === id);
-      const input = document.createElement('input');
-      input.type = 'text';
-      input.value = todo.text;
-      input.className = 'edit-field';
-      input.maxLength = 200;
-      spanEl.replaceWith(input);
-      input.focus();
-      input.select();
-
-      const commit = () => {
-        const val = input.value.trim();
-        if (val) todo.text = val;
-        save();
-        editingId = null;
-        render();
-      };
-
-      input.addEventListener('blur', commit);
-      input.addEventListener('keydown', e => {
-        if (e.key === 'Enter')  input.blur();
-        if (e.key === 'Escape') { editingId = null; render(); }
-      });
-    }
-
-    // ── Events ──
-    addBtn.addEventListener('click', () => { addTodo(inputEl.value); inputEl.value = ''; });
-    inputEl.addEventListener('keydown', e => {
-      if (e.key === 'Enter') { addTodo(inputEl.value); inputEl.value = ''; }
-    });
-    clearBtn.addEventListener('click', () => {
-      todos = todos.filter(t => !t.done);
-      save();
-      render();
-    });
-    document.querySelectorAll('.filter-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        filter = btn.dataset.filter;
-        render();
-      });
-    });
-
-    render();
-  </script>
+  <script src="app.js"></script>
 </body>
 </html>

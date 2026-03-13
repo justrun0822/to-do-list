@@ -1,0 +1,22 @@
+﻿# IDE
+.idea/
+.vscode/
+
+# Local assistant metadata
+.claude/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Java / Maven
+**/target/
+*.class
+*.log
+
+# Node
+node_modules/
+
+# Env
+.env
+.env.*

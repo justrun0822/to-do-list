@@ -1,0 +1,195 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TASK_SYS // 任务系统</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="scanlines"></div>
+
+  <section class="auth-screen" id="auth-screen">
+    <div class="auth-shell">
+      <div class="auth-head">
+        <p class="auth-kicker">ACCESS PORTAL</p>
+        <h2>身份认证</h2>
+        <p class="auth-sub">登录后进入任务系统控制台</p>
+      </div>
+
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="tab-login" type="button">登录</button>
+        <button class="auth-tab" id="tab-register" type="button">注册</button>
+        <button class="auth-tab" id="tab-reset" type="button">重置密码</button>
+      </div>
+
+      <form id="login-form" class="auth-form">
+        <label>用户名</label>
+        <input id="login-username" type="text" maxlength="32" autocomplete="username" required />
+        <label>密码</label>
+        <input id="login-password" type="password" maxlength="64" autocomplete="current-password" required />
+        <button class="auth-submit" id="login-submit" type="submit">进入系统</button>
+      </form>
+
+      <form id="register-form" class="auth-form" style="display:none">
+        <label>用户名</label>
+        <input id="reg-username" type="text" maxlength="32" autocomplete="username" required />
+        <label>密码</label>
+        <input id="reg-password" type="password" maxlength="64" autocomplete="new-password" required />
+        <label>昵称</label>
+        <input id="reg-nickname" type="text" maxlength="32" autocomplete="nickname" placeholder="可选" />
+        <button class="auth-submit" id="register-submit" type="submit">创建账号</button>
+      </form>
+
+      <form id="reset-form" class="auth-form" style="display:none">
+        <label>用户名</label>
+        <input id="reset-username" type="text" maxlength="32" required />
+        <label>验证码（6位）</label>
+        <div class="inline-row">
+          <input id="reset-code" type="text" maxlength="6" required />
+          <button class="auth-alt" id="send-code-btn" type="button">获取验证码</button>
+        </div>
+        <label>新密码</label>
+        <input id="reset-password" type="password" maxlength="64" required />
+        <label>确认新密码</label>
+        <input id="reset-password2" type="password" maxlength="64" required />
+        <button class="auth-submit" id="reset-submit" type="submit">重置密码</button>
+      </form>
+
+      <p class="auth-msg" id="auth-msg"></p>
+      <p class="auth-foot">后端地址: <code id="api-base-hint">http://127.0.0.1:8080/api</code></p>
+    </div>
+  </section>
+
+  <div class="container" id="app-root" style="display:none">
+    <header class="header">
+      <div class="header-badge">TASK MANAGEMENT SYSTEM</div>
+      <h1>任务系统</h1>
+      <p class="header-sub">// PERSONAL MISSION CONTROL //</p>
+
+      <div class="user-bar">
+        <span id="user-name">未登录</span>
+        <button id="export-btn" type="button">EXPORT</button>
+        <label class="import-label" for="import-file">IMPORT</label>
+        <input id="import-file" type="file" accept="application/json" />
+        <button id="logout-btn" type="button">LOGOUT</button>
+      </div>
+
+      <div class="progress-track">
+        <div class="progress-fill" id="progress-fill" style="width:0%" data-empty="true"></div>
+      </div>
+      <div class="progress-meta">
+        <span id="progress-text">0 / 0 COMPLETED</span>
+        <span id="progress-pct">—</span>
+      </div>
+    </header>
+
+    <div class="clock-bar">
+      <div class="clock-segment">
+        <div class="label">DATE</div>
+        <div class="val" id="date-val">—</div>
+      </div>
+      <div class="clock-segment">
+        <div class="label">TIME</div>
+        <div class="val" id="time-val">—</div>
+      </div>
+      <div class="clock-segment">
+        <div class="label">DAY</div>
+        <div class="val" id="day-val">—</div>
+      </div>
+    </div>
+
+    <section class="dashboard-grid" id="dashboard-grid">
+      <article class="dash-card"><b id="dash-total">0</b><span>总任务</span></article>
+      <article class="dash-card"><b id="dash-completed">0</b><span>已完成</span></article>
+      <article class="dash-card"><b id="dash-overdue">0</b><span>已逾期</span></article>
+      <article class="dash-card"><b id="dash-due-soon">0</b><span>24h到期</span></article>
+    </section>
+
+    <section class="notify-panel" id="notify-panel" style="display:none">
+      <div class="recycle-head">
+        <h3>提醒中心</h3>
+        <button id="refresh-notify" type="button">刷新</button>
+      </div>
+      <ul id="notify-list"></ul>
+    </section>
+
+    <div class="search-panel">
+      <input id="keyword-input" type="text" placeholder="搜索标题/描述" />
+      <select id="group-filter"></select>
+      <select id="tag-filter"></select>
+      <select id="sort-filter">
+        <option value="manual:desc">手动排序</option>
+        <option value="updatedAt:desc">最近更新</option>
+        <option value="dueAt:asc">截止时间升序</option>
+        <option value="priority:asc">优先级升序</option>
+      </select>
+      <button id="search-btn" type="button">筛选</button>
+      <button id="toggle-recycle" type="button">回收站</button>
+      <button id="toggle-notify" type="button">提醒</button>
+    </div>
+
+    <div class="input-section">
+      <div class="input-shell">
+        <span class="input-tag">+ NEW</span>
+        <input id="new-todo" type="text" placeholder="输入新任务，按 Enter 确认…" maxlength="120" autocomplete="off" spellcheck="false" />
+        <input id="new-group" class="meta-input" type="text" maxlength="64" placeholder="分组" />
+        <input id="new-tags" class="meta-input" type="text" maxlength="128" placeholder="标签(,分隔)" />
+        <select id="new-recurring-type" class="meta-select" title="周期类型">
+          <option value="NONE" selected>不重复</option>
+          <option value="DAILY">每天</option>
+          <option value="WEEKLY">每周</option>
+        </select>
+        <input id="new-recurring-interval" class="meta-input" type="number" min="1" max="30" value="1" title="周期间隔" />
+        <select id="new-priority" class="meta-select" title="优先级">
+          <option value="1">P1</option>
+          <option value="2" selected>P2</option>
+          <option value="3">P3</option>
+        </select>
+        <input id="new-due-at" class="due-input" type="datetime-local" title="截止时间" />
+        <button class="add-btn" id="add-btn" title="添加任务" type="button">ADD</button>
+      </div>
+    </div>
+
+    <div class="bulk-bar">
+      <span id="bulk-count">已选 0 项</span>
+      <button id="bulk-done" type="button">批量完成</button>
+      <button id="bulk-pending" type="button">批量待办</button>
+      <button id="bulk-delete" type="button">批量删除</button>
+    </div>
+
+    <div class="filter-strip">
+      <button class="filter-btn active" data-filter="all" type="button">全部<span class="filter-count" id="cnt-all"></span></button>
+      <button class="filter-btn" data-filter="active" type="button">待完成<span class="filter-count" id="cnt-active"></span></button>
+      <button class="filter-btn" data-filter="done" type="button">已完成<span class="filter-count" id="cnt-done"></span></button>
+    </div>
+
+    <div class="list-state" id="list-state" style="display:none">
+      <span id="list-state-text">加载中...</span>
+      <button id="retry-load" type="button" style="display:none">重试</button>
+    </div>
+
+    <ul class="todo-list" id="todo-list"></ul>
+
+    <div class="empty-state" id="empty-state" style="display:none">
+      <span class="empty-glyph">NULL</span>
+      <p class="empty-label">// NO TASKS LOADED · ADD ONE ABOVE //</p>
+    </div>
+
+    <div class="list-footer" id="list-footer" style="display:none">
+      <p class="footer-stat"><b id="remain-count">0</b>&nbsp;TASKS PENDING</p>
+      <button class="clear-btn" id="clear-done" type="button">PURGE COMPLETED ×</button>
+    </div>
+
+    <section class="recycle-panel" id="recycle-panel" style="display:none">
+      <div class="recycle-head">
+        <h3>回收站</h3>
+        <button id="refresh-recycle" type="button">刷新</button>
+      </div>
+      <ul id="recycle-list"></ul>
+    </section>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

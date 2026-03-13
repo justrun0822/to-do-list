@@ -672,3 +672,53 @@ h1 {
 ::-webkit-scrollbar-thumb:hover { background: var(--purple); }
 
 ::selection { background: var(--purple-dim); color: var(--purple-bright); }
+
+/* ══════════════════════════
+   UNDO BAR
+══════════════════════════ */
+#undo-bar {
+  position: fixed;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--purple-line);
+  padding: 12px 20px;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.15em;
+  color: var(--text-50);
+  box-shadow: 0 0 24px var(--purple-dim);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s, transform 0.2s;
+  white-space: nowrap;
+  z-index: 999;
+}
+
+#undo-bar.visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+  pointer-events: auto;
+}
+
+#undo-btn {
+  background: none;
+  border: 1px solid var(--purple-line);
+  padding: 4px 14px;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.25em;
+  color: var(--purple-bright);
+  cursor: pointer;
+  text-shadow: 0 0 8px var(--purple-glow);
+  transition: background 0.15s, box-shadow 0.15s;
+}
+
+#undo-btn:hover {
+  background: var(--purple-dim);
+  box-shadow: 0 0 12px var(--purple-glow);
+}

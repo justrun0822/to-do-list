@@ -6,6 +6,8 @@ const STORAGE_KEY = 'jrun-todos-v4';
 let todos     = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
 let filter    = 'all';
 let editingId = null;
+let undoStack = null; // { todo, index } | null
+let undoTimer = null;
 
 // ── DOM refs ──
 const listEl    = document.getElementById('todo-list');
@@ -146,10 +148,42 @@ function toggle(id) {
 function removeTodo(id, li) {
   li.classList.add('removing');
   li.addEventListener('animationend', () => {
+    const idx = todos.findIndex(t => t.id === id);
+    const todo = todos[idx];
     todos = todos.filter(t => t.id !== id);
     save();
     render();
+    showUndo(todo, idx);
   }, { once: true });
+}
+
+function showUndo(todo, idx) {
+  clearTimeout(undoTimer);
+  undoStack = { todo, idx };
+  let bar = document.getElementById('undo-bar');
+  if (!bar) {
+    bar = document.createElement('div');
+    bar.id = 'undo-bar';
+    bar.innerHTML = `<span id="undo-msg"></span><button id="undo-btn">UNDO</button>`;
+    document.querySelector('.container').appendChild(bar);
+    document.getElementById('undo-btn').addEventListener('click', () => {
+      if (!undoStack) return;
+      todos.splice(undoStack.idx, 0, undoStack.todo);
+      undoStack = null;
+      save();
+      render();
+      hideUndo();
+    });
+  }
+  document.getElementById('undo-msg').textContent = `已删除: ${todo.text.slice(0, 24)}${todo.text.length > 24 ? '…' : ''}`;
+  bar.classList.add('visible');
+  undoTimer = setTimeout(hideUndo, 4000);
+}
+
+function hideUndo() {
+  const bar = document.getElementById('undo-bar');
+  if (bar) bar.classList.remove('visible');
+  undoStack = null;
 }
 
 function startEdit(id, spanEl) {
